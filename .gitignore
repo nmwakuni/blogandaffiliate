@@ -1,0 +1,53 @@
+# Dependencies
+node_modules/
+.pnpm-store/
+
+# Next.js
+apps/web/.next/
+apps/web/out/
+apps/web/dist/
+
+# Cloudflare
+apps/api/.wrangler/
+apps/api/dist/
+.wrangler/
+.dev.vars
+
+# Environment variables
+.env
+.env*.local
+.env.production
+
+# Database
+*.db
+*.db-journal
+packages/db/.turso/
+
+# Build outputs
+dist/
+build/
+.turbo/
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+npm-debug.log*
+pnpm-debug.log*
+
+# Testing
+coverage/
+.nyc_output/
+
+# Misc
+.vercel/
+*.tsbuildinfo

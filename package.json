@@ -1,0 +1,35 @@
+{
+  "name": "affiliate-blog",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "pnpm --parallel dev",
+    "dev:web": "pnpm --filter web dev",
+    "dev:api": "pnpm --filter api dev",
+    "build": "pnpm --recursive build",
+    "build:web": "pnpm --filter web build",
+    "build:api": "pnpm --filter api build",
+    "deploy:api": "pnpm --filter api deploy",
+    "db:generate": "pnpm --filter @repo/db generate",
+    "db:migrate": "pnpm --filter @repo/db migrate",
+    "db:studio": "pnpm --filter @repo/db studio",
+    "db:push": "pnpm --filter @repo/db push",
+    "generate:post": "tsx scripts/generate-post.ts",
+    "lint": "pnpm --recursive lint",
+    "clean": "pnpm --recursive clean && rm -rf node_modules"
+  },
+  "devDependencies": {
+    "@types/node": "^20.10.0",
+    "tsx": "^4.7.0",
+    "typescript": "^5.3.3"
+  },
+  "engines": {
+    "node": ">=18.0.0",
+    "pnpm": ">=8.0.0"
+  },
+  "dependencies": {
+    "better-auth": "^1.3.34",
+    "better-sqlite3": "^12.4.1",
+    "resend": "^6.4.2"
+  }
+}
