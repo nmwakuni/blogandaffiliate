@@ -3,83 +3,151 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { getPost, getPosts } from '@/lib/api-client';
 import { formatDate } from '@repo/utils';
+import NewsletterForm from '@/components/NewsletterForm';
+import { Badge } from '@/components/ui/badge';
+import { Calendar, Clock } from 'lucide-react';
+import { generateMetadata as genMeta, generateArticleSchema, generateBreadcrumbSchema } from '@/lib/seo';
+import StructuredData from '@/components/StructuredData';
+
+const baseUrl = process.env.NEXT_PUBLIC_URL || 'http://localhost:3000';
 
 export async function generateStaticParams() {
-  const posts = await getPosts();
-  return posts.map((post) => ({
-    slug: post.slug,
-  }));
+  try {
+    const posts = await getPosts();
+    return posts.map((post) => ({
+      slug: post.slug,
+    }));
+  } catch (error) {
+    return [];
+  }
 }
 
 export async function generateMetadata({ params }: { params: { slug: string } }) {
-  const post = await getPost(params.slug);
-  
-  if (!post) return {};
-  
-  return {
-    title: post.seoTitle || post.title,
-    description: post.seoDescription || post.excerpt,
-    openGraph: {
-      title: post.title,
-      description: post.excerpt || '',
-      images: post.coverImage ? [post.coverImage] : [],
-    },
-  };
+  try {
+    const post = await getPost(params.slug);
+
+    if (!post) return {};
+
+    const postUrl = `${baseUrl}/blog/${post.slug}`;
+
+    return genMeta({
+      title: post.seoTitle || post.title,
+      description: post.seoDescription || post.excerpt || post.content.substring(0, 155),
+      url: postUrl,
+      image: post.coverImage,
+      type: 'article',
+      publishedTime: post.publishedAt || post.createdAt,
+      modifiedTime: post.updatedAt,
+      authors: ['EdgeStack Team'],
+      tags: post.keywords,
+      section: 'Technology',
+    });
+  } catch (error) {
+    return {};
+  }
 }
 
 export default async function BlogPostPage({ params }: { params: { slug: string } }) {
   let post;
-  
+
   try {
     post = await getPost(params.slug);
   } catch (error) {
     notFound();
   }
-  
+
+  const readingTime = Math.ceil(post.content.split(' ').length / 200);
+  const postUrl = `${baseUrl}/blog/${post.slug}`;
+
+  // Generate structured data
+  const articleSchema = generateArticleSchema({
+    title: post.title,
+    description: post.excerpt || post.content.substring(0, 155),
+    url: postUrl,
+    image: post.coverImage,
+    publishedTime: post.publishedAt || post.createdAt,
+    modifiedTime: post.updatedAt,
+    authors: ['EdgeStack Team'],
+    tags: post.keywords,
+  });
+
+  const breadcrumbSchema = generateBreadcrumbSchema([
+    { name: 'Home', url: baseUrl },
+    { name: 'Blog', url: `${baseUrl}/blog` },
+    { name: post.title, url: postUrl },
+  ]);
+
   return (
-    <article className="max-w-3xl mx-auto px-4 py-12">
-      <header className="mb-8">
-        <h1 className="text-4xl font-bold mb-4">{post.title}</h1>
-        <div className="flex items-center gap-4 text-gray-600">
-          <time dateTime={post.publishedAt?.toISOString()}>
-            {post.publishedAt ? formatDate(post.publishedAt) : 'Draft'}
-          </time>
-          {post.keywords.length > 0 && (
-            <div className="flex gap-2">
-              {post.keywords.map((keyword) => (
-                <span key={keyword} className="bg-blue-100 text-blue-800 px-2 py-1 rounded text-sm">
-                  {keyword}
-                </span>
-              ))}
+    <>
+      <StructuredData data={articleSchema} />
+      <StructuredData data={breadcrumbSchema} />
+
+      <article className="animate-fade-in">
+      {/* Hero Section */}
+      <div className="border-b bg-gradient-secondary">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+          <header className="space-y-6">
+            <div className="flex flex-wrap items-center gap-4 text-sm text-muted-foreground">
+              <div className="flex items-center gap-2">
+                <Calendar className="w-4 h-4" />
+                <time dateTime={post.publishedAt?.toISOString()}>
+                  {post.publishedAt ? formatDate(post.publishedAt) : 'Draft'}
+                </time>
+              </div>
+              <div className="flex items-center gap-2">
+                <Clock className="w-4 h-4" />
+                <span>{readingTime} min read</span>
+              </div>
             </div>
-          )}
+
+            <h1 className="text-5xl sm:text-6xl font-bold tracking-tight text-gradient">
+              {post.title}
+            </h1>
+
+            {post.excerpt && (
+              <p className="text-xl text-muted-foreground leading-relaxed">
+                {post.excerpt}
+              </p>
+            )}
+
+            {post.keywords.length > 0 && (
+              <div className="flex flex-wrap gap-2">
+                {post.keywords.map((keyword) => (
+                  <Badge key={keyword} variant="secondary" className="bg-primary/10">
+                    {keyword}
+                  </Badge>
+                ))}
+              </div>
+            )}
+          </header>
         </div>
-      </header>
-      
-      <div className="prose prose-lg max-w-none">
-        <ReactMarkdown remarkPlugins={[remarkGfm]}>
-          {post.content}
-        </ReactMarkdown>
       </div>
-      
-      <footer className="mt-12 pt-8 border-t">
-        <div className="bg-blue-50 p-6 rounded-lg">
-          <h3 className="text-xl font-semibold mb-2">Stay Updated</h3>
-          <p className="text-gray-600 mb-4">
-            Get the latest tutorials delivered to your inbox
-          </p>
-          <form className="flex gap-2">
-            <input
-              type="email"
-              placeholder="your@email.com"
-              className="flex-1 px-4 py-2 border rounded"
-            />
-            <button className="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700">
-              Subscribe
-            </button>
-          </form>
+
+      {/* Cover Image */}
+      {post.coverImage && (
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 -mt-16">
+          <img
+            src={post.coverImage}
+            alt={post.title}
+            className="w-full rounded-xl border border-border shadow-2xl"
+          />
         </div>
-      </footer>
+      )}
+
+      {/* Content */}
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+        <div className="prose prose-lg prose-invert max-w-none">
+          <ReactMarkdown remarkPlugins={[remarkGfm]}>
+            {post.content}
+          </ReactMarkdown>
+        </div>
+
+        {/* Newsletter CTA */}
+        <div className="mt-16 pt-8 border-t">
+          <NewsletterForm />
+        </div>
+      </div>
     </article>
+    </>
   );
 }
