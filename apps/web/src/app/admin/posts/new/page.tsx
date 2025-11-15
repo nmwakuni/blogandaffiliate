@@ -2,6 +2,12 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { Save, X } from 'lucide-react';
+import TiptapEditor from '@/components/TiptapEditor';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 
 export default function NewPostPage() {
   const router = useRouter();
@@ -11,10 +17,10 @@ export default function NewPostPage() {
     content: '',
     excerpt: '',
     coverImage: '',
+    status: 'draft' as 'draft' | 'published',
     seoTitle: '',
     seoDescription: '',
     keywords: '',
-    status: 'draft' as 'draft' | 'published',
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -22,10 +28,7 @@ export default function NewPostPage() {
     setLoading(true);
 
     try {
-      const keywords = formData.keywords
-        .split(',')
-        .map(k => k.trim())
-        .filter(Boolean);
+      const keywords = formData.keywords.split(',').map(k => k.trim()).filter(Boolean);
 
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/posts`, {
         method: 'POST',
@@ -38,8 +41,8 @@ export default function NewPostPage() {
 
       if (!response.ok) throw new Error('Failed to create post');
 
-      alert('Post created successfully!');
-      router.push('/admin/posts');
+      const post = await response.json();
+      router.push(`/blog/${post.slug}`);
     } catch (error) {
       alert('Failed to create post: ' + (error as Error).message);
     } finally {
@@ -48,149 +51,173 @@ export default function NewPostPage() {
   };
 
   return (
-    <div className="max-w-4xl mx-auto px-4 py-12">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 animate-fade-in">
       <div className="mb-8">
-        <h1 className="text-3xl font-bold mb-2">✍️ Create New Post</h1>
-        <p className="text-gray-600">Write a blog post manually</p>
+        <h1 className="text-4xl font-bold text-gradient mb-2">Create New Post</h1>
+        <p className="text-muted-foreground">Write and publish your next amazing article</p>
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-6">
-        <div>
-          <label className="block text-sm font-medium mb-2">
-            Title *
-          </label>
-          <input
-            type="text"
-            value={formData.title}
-            onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-            placeholder="Your Post Title"
-            className="w-full px-4 py-2 border rounded-lg"
-            required
-          />
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium mb-2">
-            Content * (Markdown supported)
-          </label>
-          <textarea
-            value={formData.content}
-            onChange={(e) => setFormData({ ...formData, content: e.target.value })}
-            placeholder="# Introduction&#10;&#10;Your content here...&#10;&#10;## Section 1&#10;&#10;More content..."
-            className="w-full px-4 py-2 border rounded-lg font-mono text-sm"
-            rows={20}
-            required
-          />
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium mb-2">
-            Excerpt
-          </label>
-          <textarea
-            value={formData.excerpt}
-            onChange={(e) => setFormData({ ...formData, excerpt: e.target.value })}
-            placeholder="Brief summary of your post (1-2 sentences)"
-            className="w-full px-4 py-2 border rounded-lg"
-            rows={3}
-          />
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium mb-2">
-            Cover Image URL
-          </label>
-          <input
-            type="url"
-            value={formData.coverImage}
-            onChange={(e) => setFormData({ ...formData, coverImage: e.target.value })}
-            placeholder="https://example.com/image.jpg"
-            className="w-full px-4 py-2 border rounded-lg"
-          />
-        </div>
-
-        <div className="border-t pt-6">
-          <h3 className="font-semibold mb-4">SEO Settings</h3>
-          
-          <div className="space-y-4">
+        <Card>
+          <CardHeader>
+            <CardTitle>Post Details</CardTitle>
+            <CardDescription>Basic information about your post</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-6">
             <div>
               <label className="block text-sm font-medium mb-2">
-                SEO Title (max 60 characters)
+                Title <span className="text-destructive">*</span>
               </label>
-              <input
+              <Input
+                type="text"
+                value={formData.title}
+                onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                placeholder="Enter an engaging title..."
+                className="text-lg"
+                required
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium mb-2">
+                Content <span className="text-destructive">*</span>
+              </label>
+              <TiptapEditor
+                content={formData.content}
+                onChange={(content) => setFormData({ ...formData, content })}
+                placeholder="Start writing your amazing content..."
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium mb-2">
+                Excerpt
+              </label>
+              <Textarea
+                value={formData.excerpt}
+                onChange={(e) => setFormData({ ...formData, excerpt: e.target.value })}
+                placeholder="A brief summary of your post..."
+                rows={3}
+              />
+              <p className="text-xs text-muted-foreground mt-1">
+                Optional. Will be auto-generated if left empty.
+              </p>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium mb-2">
+                Cover Image URL
+              </label>
+              <Input
+                type="url"
+                value={formData.coverImage}
+                onChange={(e) => setFormData({ ...formData, coverImage: e.target.value })}
+                placeholder="https://example.com/image.jpg"
+              />
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>SEO Settings</CardTitle>
+            <CardDescription>Optimize your post for search engines</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            <div>
+              <label className="block text-sm font-medium mb-2">
+                SEO Title
+              </label>
+              <Input
                 type="text"
                 value={formData.seoTitle}
                 onChange={(e) => setFormData({ ...formData, seoTitle: e.target.value })}
-                placeholder="Leave empty to use post title"
+                placeholder="SEO-optimized title (max 60 chars)"
                 maxLength={60}
-                className="w-full px-4 py-2 border rounded-lg"
               />
-              <p className="text-xs text-gray-500 mt-1">
+              <p className="text-xs text-muted-foreground mt-1">
                 {formData.seoTitle.length}/60 characters
               </p>
             </div>
 
             <div>
               <label className="block text-sm font-medium mb-2">
-                SEO Description (max 160 characters)
+                SEO Description
               </label>
-              <textarea
+              <Textarea
                 value={formData.seoDescription}
                 onChange={(e) => setFormData({ ...formData, seoDescription: e.target.value })}
-                placeholder="Leave empty to use excerpt"
-                maxLength={160}
-                className="w-full px-4 py-2 border rounded-lg"
+                placeholder="Meta description for search results (max 160 chars)"
                 rows={3}
+                maxLength={160}
               />
-              <p className="text-xs text-gray-500 mt-1">
+              <p className="text-xs text-muted-foreground mt-1">
                 {formData.seoDescription.length}/160 characters
               </p>
             </div>
 
             <div>
               <label className="block text-sm font-medium mb-2">
-                Keywords (comma separated)
+                Keywords
               </label>
-              <input
+              <Input
                 type="text"
                 value={formData.keywords}
                 onChange={(e) => setFormData({ ...formData, keywords: e.target.value })}
-                placeholder="nextjs, cloudflare, tutorial"
-                className="w-full px-4 py-2 border rounded-lg"
+                placeholder="nextjs, react, tutorial (comma separated)"
               />
             </div>
-          </div>
-        </div>
+          </CardContent>
+        </Card>
 
-        <div className="border-t pt-6">
-          <label className="block text-sm font-medium mb-2">
-            Status
-          </label>
-          <select
-            value={formData.status}
-            onChange={(e) => setFormData({ ...formData, status: e.target.value as any })}
-            className="w-full px-4 py-2 border rounded-lg"
-          >
-            <option value="draft">Draft (not visible to public)</option>
-            <option value="published">Published (visible to all)</option>
-          </select>
-        </div>
+        <Card>
+          <CardHeader>
+            <CardTitle>Publishing Options</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div>
+              <label className="block text-sm font-medium mb-3">
+                Status
+              </label>
+              <div className="flex gap-4">
+                <Button
+                  type="button"
+                  variant={formData.status === 'draft' ? 'default' : 'outline'}
+                  onClick={() => setFormData({ ...formData, status: 'draft' })}
+                >
+                  Save as Draft
+                </Button>
+                <Button
+                  type="button"
+                  variant={formData.status === 'published' ? 'default' : 'outline'}
+                  onClick={() => setFormData({ ...formData, status: 'published' })}
+                  className={formData.status === 'published' ? 'bg-gradient-primary text-white' : ''}
+                >
+                  Publish Now
+                </Button>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
 
-        <div className="flex gap-4">
-          <button
+        <div className="flex gap-4 sticky bottom-4 bg-background/80 backdrop-blur-sm p-4 rounded-lg border">
+          <Button
             type="submit"
             disabled={loading}
-            className="flex-1 bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 disabled:opacity-50"
+            className="flex-1 bg-gradient-primary text-white hover:opacity-90 h-12 text-lg"
           >
-            {loading ? 'Creating...' : '💾 Create Post'}
-          </button>
-          <button
+            <Save className="w-5 h-5 mr-2" />
+            {loading ? 'Saving...' : formData.status === 'published' ? 'Publish Post' : 'Save Draft'}
+          </Button>
+          <Button
             type="button"
-            onClick={() => router.back()}
-            className="px-6 py-3 border rounded-lg hover:bg-gray-50"
+            variant="outline"
+            onClick={() => router.push('/admin/posts')}
+            className="h-12"
           >
+            <X className="w-5 h-5 mr-2" />
             Cancel
-          </button>
+          </Button>
         </div>
       </form>
     </div>
