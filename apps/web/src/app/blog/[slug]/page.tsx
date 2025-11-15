@@ -6,6 +6,10 @@ import { formatDate } from '@repo/utils';
 import NewsletterForm from '@/components/NewsletterForm';
 import { Badge } from '@/components/ui/badge';
 import { Calendar, Clock } from 'lucide-react';
+import { generateMetadata as genMeta, generateArticleSchema, generateBreadcrumbSchema } from '@/lib/seo';
+import StructuredData from '@/components/StructuredData';
+
+const baseUrl = process.env.NEXT_PUBLIC_URL || 'http://localhost:3000';
 
 export async function generateStaticParams() {
   try {
@@ -24,15 +28,20 @@ export async function generateMetadata({ params }: { params: { slug: string } })
 
     if (!post) return {};
 
-    return {
+    const postUrl = `${baseUrl}/blog/${post.slug}`;
+
+    return genMeta({
       title: post.seoTitle || post.title,
-      description: post.seoDescription || post.excerpt,
-      openGraph: {
-        title: post.title,
-        description: post.excerpt || '',
-        images: post.coverImage ? [post.coverImage] : [],
-      },
-    };
+      description: post.seoDescription || post.excerpt || post.content.substring(0, 155),
+      url: postUrl,
+      image: post.coverImage,
+      type: 'article',
+      publishedTime: post.publishedAt || post.createdAt,
+      modifiedTime: post.updatedAt,
+      authors: ['EdgeStack Team'],
+      tags: post.keywords,
+      section: 'Technology',
+    });
   } catch (error) {
     return {};
   }
@@ -48,9 +57,32 @@ export default async function BlogPostPage({ params }: { params: { slug: string 
   }
 
   const readingTime = Math.ceil(post.content.split(' ').length / 200);
+  const postUrl = `${baseUrl}/blog/${post.slug}`;
+
+  // Generate structured data
+  const articleSchema = generateArticleSchema({
+    title: post.title,
+    description: post.excerpt || post.content.substring(0, 155),
+    url: postUrl,
+    image: post.coverImage,
+    publishedTime: post.publishedAt || post.createdAt,
+    modifiedTime: post.updatedAt,
+    authors: ['EdgeStack Team'],
+    tags: post.keywords,
+  });
+
+  const breadcrumbSchema = generateBreadcrumbSchema([
+    { name: 'Home', url: baseUrl },
+    { name: 'Blog', url: `${baseUrl}/blog` },
+    { name: post.title, url: postUrl },
+  ]);
 
   return (
-    <article className="animate-fade-in">
+    <>
+      <StructuredData data={articleSchema} />
+      <StructuredData data={breadcrumbSchema} />
+
+      <article className="animate-fade-in">
       {/* Hero Section */}
       <div className="border-b bg-gradient-secondary">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
@@ -116,5 +148,6 @@ export default async function BlogPostPage({ params }: { params: { slug: string 
         </div>
       </div>
     </article>
+    </>
   );
 }

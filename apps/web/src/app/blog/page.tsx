@@ -5,11 +5,17 @@ import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Calendar, Clock, ArrowRight } from 'lucide-react';
 import SearchPosts from '@/components/SearchPosts';
+import { generateMetadata as genMeta } from '@/lib/seo';
 
-export const metadata = {
-  title: 'Blog - EdgeStack',
-  description: 'AI-powered content, tutorials, and insights on modern web development',
-};
+const baseUrl = process.env.NEXT_PUBLIC_URL || 'http://localhost:3000';
+
+export const metadata = genMeta({
+  title: 'Blog - Latest Articles & Tutorials',
+  description: 'Explore AI-powered content, tutorials, and insights on modern web development, affiliate marketing, edge computing, and cutting-edge technologies.',
+  url: `${baseUrl}/blog`,
+  type: 'website',
+  tags: ['blog', 'tutorials', 'web development', 'affiliate marketing', 'AI', 'Next.js', 'Cloudflare'],
+});
 
 export default async function BlogPage() {
   let posts = [];

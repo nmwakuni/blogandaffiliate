@@ -2,6 +2,8 @@ import type { Metadata } from 'next';
 import { Inter, JetBrains_Mono } from 'next/font/google';
 import Link from 'next/link';
 import './globals.css';
+import { generateMetadata as genMeta, generateWebsiteSchema, generateOrganizationSchema } from '@/lib/seo';
+import StructuredData from '@/components/StructuredData';
 
 const inter = Inter({
   subsets: ['latin'],
@@ -15,11 +17,14 @@ const jetbrainsMono = JetBrains_Mono({
   display: 'swap',
 });
 
-export const metadata: Metadata = {
-  title: 'EdgeStack - Modern Affiliate Blog Platform',
-  description: 'AI-powered blog platform for affiliate marketing. Built with Next.js, Hono, Cloudflare Workers, and Turso.',
-  metadataBase: new URL(process.env.NEXT_PUBLIC_URL || 'http://localhost:3000'),
-};
+const baseUrl = process.env.NEXT_PUBLIC_URL || 'http://localhost:3000';
+
+export const metadata: Metadata = genMeta({
+  title: 'EdgeStack - AI-Powered Affiliate Blog Platform',
+  description: 'Create stunning blog content with AI, track affiliate links, and grow your revenue. Built with Next.js 15, Hono, Cloudflare Workers, and Gemini AI.',
+  url: baseUrl,
+  type: 'website',
+});
 
 export default function RootLayout({
   children,
@@ -28,6 +33,10 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" className={`dark ${inter.variable} ${jetbrainsMono.variable}`} suppressHydrationWarning>
+      <head>
+        <StructuredData data={generateWebsiteSchema()} />
+        <StructuredData data={generateOrganizationSchema()} />
+      </head>
       <body className={inter.className}>
         <div className="relative">
           {/* Gradient background effects */}
